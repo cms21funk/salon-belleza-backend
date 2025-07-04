@@ -1,0 +1,9 @@
+# Ignora la carpeta de dependencias
+node_modules/
+
+# Ignora el archivo de configuración sensible
+.env
+
+# Ignora logs y otros archivos temporales
+*.log
+.DS_Store

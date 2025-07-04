@@ -1,0 +1,1 @@
+module.exports = 'clave_secreta_super_segura';

@@ -1,4 +1,4 @@
-// server.js 
+// server.js  
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -12,13 +12,16 @@ const PORT = process.env.PORT || 3000;
 
 // CORS para entornos de desarrollo y producción (Netlify y local)
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://<TU_FRONTEND_NETLIFY>.netlify.app'],
+  origin: [
+    'http://localhost:5173',
+    'https://salon-belleza-frontend.netlify.app' // 👈 reemplaza con tu dominio real de Netlify
+  ],
   credentials: true
 }));
 
 app.use(express.json()); // Parsear JSON
 
-// Servir imágenes desde carpeta pública (Render solo puede leer imágenes incluidas en el repo)
+// Servir imágenes desde carpeta pública
 app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
 
 // Importar rutas

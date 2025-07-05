@@ -8,7 +8,8 @@ const pool = require('../models/db.js');
 const obtenerProfesionales = async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, nombre, email, rol, especialidad, genero, comuna, imagen 
+      `SELECT id, nombre, email, rol, especialidad, genero, comuna,
+              CONCAT('/images/', imagen) AS imagen
        FROM usuarios 
        WHERE rol = 'admin' OR rol = 'staff'
        ORDER BY id DESC`

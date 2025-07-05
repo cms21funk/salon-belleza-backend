@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const profesionalesController = require('../controllers/profesionalesController');
 
-// Obtener todos los profesionales
+// Obtener todos 
 router.get('/', profesionalesController.obtenerProfesionales);
 
 // Obtener un profesional por ID

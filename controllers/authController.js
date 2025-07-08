@@ -9,13 +9,13 @@ const secretKey = require('../secretKey');
 // =======================================
 const registrarCliente = async (req, res) => {
   try {
-    const { nombre, email, password, comuna, genero } = req.body;
+    const { nombre, email, password, comuna, genero, rol, especialidad } = req.body;
     // Encriptar contraseña
     const passwordEncriptada = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
       'INSERT INTO usuarios (nombre, email, password, comuna, genero, rol) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [nombre, email, passwordEncriptada, comuna, genero, 'cliente']
+      [ nombre, email, passwordEncriptada, comuna, genero, rol || 'cliente' ]
     );
 
     res.status(201).json({ mensaje: 'Cliente registrado exitosamente', usuario: result.rows[0] });

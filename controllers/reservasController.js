@@ -1,4 +1,3 @@
-// controllers/reservaController.js
 const pool = require('../models/db');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
@@ -17,16 +16,15 @@ const crearReserva = async (req, res) => {
       nombre,
       apellido,
       correo,
-      telefono,
-      profesional_id
+      telefono
     } = req.body;
 
-    //Validar si ya existe una reserva en la misma fecha/hora para la misma profesional
+    // Validar si ya existe una reserva en la misma fecha/hora para la misma profesional
     const validacionQuery = `
       SELECT * FROM reserva_hora
-      WHERE profesional_id = $1 AND fecha = $2 AND hora = $3
+      WHERE profesional = $1 AND fecha = $2 AND hora = $3
     `;
-    const validacion = await pool.query(validacionQuery, [profesional_id, fecha, hora]);
+    const validacion = await pool.query(validacionQuery, [profesional, fecha, hora]);
 
     if (validacion.rows.length > 0) {
       return res.status(409).json({
@@ -34,16 +32,16 @@ const crearReserva = async (req, res) => {
       });
     }
 
-    //Insertar la nueva reserva
+    // Insertar la nueva reserva
     const insertQuery = `
       INSERT INTO reserva_hora
-      (servicio, profesional, fecha, hora, nombre_cliente, apellido_cliente, correo_cliente, telefono_cliente, profesional_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      (servicio, profesional, fecha, hora, nombre_cliente, apellido_cliente, correo_cliente, telefono_cliente)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     `;
-    const values = [servicio, profesional, fecha, hora, nombre, apellido, correo, telefono, profesional_id];
+    const values = [servicio, profesional, fecha, hora, nombre, apellido, correo, telefono];
     await pool.query(insertQuery, values);
 
-    //Enviar notificación al correo del salón
+    // Enviar notificación al correo del salón
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -72,7 +70,7 @@ const crearReserva = async (req, res) => {
       text: mensaje
     });
 
-    //Respuesta exitosa
+    // Respuesta exitosa
     res.status(201).json({ mensaje: 'Reserva registrada y correo enviado' });
 
   } catch (error) {
@@ -81,5 +79,4 @@ const crearReserva = async (req, res) => {
   }
 };
 
-//Exportación del controlador
 module.exports = { crearReserva };

@@ -1,13 +1,12 @@
-// routes/productosRoutes.js
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 
-//Middleware para proteger rutas (JWT)
+// Middleware para proteger rutas (JWT)
 const { verificarToken } = require('../middleware/middlewares');
 
-//Controladores de productos
+// Controladores de productos
 const {
   obtenerProductos,
   agregarProducto,
@@ -15,7 +14,7 @@ const {
   eliminarProducto
 } = require('../controllers/productosController');
 
-//Configuración de Multer para subir imágenes a /public/images
+// Configuración de Multer para subir imágenes a /public/images
 const storage = multer.diskStorage({
   destination: path.join(__dirname, '../public/images'),
   filename: (req, file, cb) => {
@@ -24,13 +23,12 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-
 /* RUTAS DE PRODUCTOS */
 
-//Obtener todos los productos (pública)
+// Obtener todos los productos (pública)
 router.get('/', obtenerProductos);
 
-//Obtener un producto por ID (pública)
+// Obtener un producto por ID (pública)
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -44,14 +42,14 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-//Rutas protegidas con token
-//Crear producto (requiere autenticación y puede subir imagen)
+// ✅ RUTAS PROTEGIDAS CON ORDEN CORRECTO
+// Crear producto
 router.post('/', verificarToken, upload.single('imagen'), agregarProducto);
 
-//Actualizar producto (requiere autenticación e imagen opcional)
+// Actualizar producto
 router.put('/:id', verificarToken, upload.single('imagen'), actualizarProducto);
 
-//Eliminar producto (requiere autenticación)
+// Eliminar producto
 router.delete('/:id', verificarToken, eliminarProducto);
 
 module.exports = router;

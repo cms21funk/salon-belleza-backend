@@ -1,11 +1,10 @@
-// controllers/productosController.js
 const path = require('path');
 const fs = require('fs');
 const pool = require('../models/db');
 
-// ===========================
-// OBTENER TODOS LOS PRODUCTOS
-// ===========================
+/**
+ * Obtener todos los productos registrados.
+ */
 const obtenerProductos = async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM productos ORDER BY id ASC');
@@ -16,24 +15,22 @@ const obtenerProductos = async (req, res) => {
   }
 };
 
-// ===========================
-// AGREGAR PRODUCTO
-// ===========================
+/**
+ * Agregar un nuevo producto con imagen.
+ * Requiere campos: nombre, detalle, categoria, precio, y un archivo de imagen.
+ */
 const agregarProducto = async (req, res) => {
   try {
-    // ⚠ Validar que sea admin
-    if (req.usuario?.rol !== 'admin') {
-      return res.status(403).json({ error: 'Acceso denegado. Solo administradores pueden agregar productos.' });
-    }
-
     const { nombre, categoria, precio, detalle } = req.body;
-    const imagen = req.file.filename;
+    const imagen = req.file?.filename;
+
+    const precioNumerico = parseFloat(precio); // 👈 Corregido
 
     const query = `
       INSERT INTO productos (nombre, detalle, categoria, precio, imagen)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *`;
-    const values = [nombre, detalle, categoria, precio, imagen];
+    const values = [nombre, detalle, categoria, precioNumerico, imagen];
     const { rows } = await pool.query(query, values);
 
     res.status(201).json(rows[0]);
@@ -43,16 +40,12 @@ const agregarProducto = async (req, res) => {
   }
 };
 
-// ===========================
-// ACTUALIZAR PRODUCTO
-// ===========================
+/**
+ * Actualizar un producto existente.
+ * Puede incluir imagen nueva o mantener la actual.
+ */
 const actualizarProducto = async (req, res) => {
   try {
-    // ⚠ Validar que sea admin
-    if (req.usuario?.rol !== 'admin') {
-      return res.status(403).json({ error: 'Acceso denegado. Solo administradores pueden modificar productos.' });
-    }
-
     const { id } = req.params;
     const { nombre, categoria, precio, detalle } = req.body;
     let imagen = req.body.imagen;
@@ -61,12 +54,14 @@ const actualizarProducto = async (req, res) => {
       imagen = req.file.filename;
     }
 
+    const precioNumerico = parseFloat(precio); // 👈 Corregido
+
     const query = `
       UPDATE productos
       SET nombre = $1, detalle = $2, categoria = $3, precio = $4, imagen = $5
       WHERE id = $6
       RETURNING *`;
-    const values = [nombre, detalle, categoria, precio, imagen, id];
+    const values = [nombre, detalle, categoria, precioNumerico, imagen, id];
     const { rows } = await pool.query(query, values);
 
     res.json(rows[0]);
@@ -76,16 +71,12 @@ const actualizarProducto = async (req, res) => {
   }
 };
 
-// ===========================
-// ELIMINAR PRODUCTO
-// ===========================
+/**
+ * Eliminar un producto por ID.
+ * Elimina también la imagen asociada del servidor si existe.
+ */
 const eliminarProducto = async (req, res) => {
   try {
-    // ⚠ Validar que sea admin
-    if (req.usuario?.rol !== 'admin') {
-      return res.status(403).json({ error: 'Acceso denegado. Solo administradores pueden eliminar productos.' });
-    }
-
     const { id } = req.params;
 
     const result = await pool.query(
@@ -96,7 +87,7 @@ const eliminarProducto = async (req, res) => {
     if (result.rows.length) {
       const imagePath = path.join(__dirname, '../public/images', result.rows[0].imagen);
       if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
+        fs.unlinkSync(imagePath); 
       }
     }
 

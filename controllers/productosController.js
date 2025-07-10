@@ -3,9 +3,9 @@ const path = require('path');
 const fs = require('fs');
 const pool = require('../models/db');
 
-/**
- * Obtener todos los productos registrados.
- */
+// ===========================
+// OBTENER TODOS LOS PRODUCTOS
+// ===========================
 const obtenerProductos = async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM productos ORDER BY id ASC');
@@ -16,12 +16,16 @@ const obtenerProductos = async (req, res) => {
   }
 };
 
-/**
- * Agregar un nuevo producto con imagen.
- * Requiere campos: nombre, detalle, categoria, precio, y un archivo de imagen.
- */
+// ===========================
+// AGREGAR PRODUCTO
+// ===========================
 const agregarProducto = async (req, res) => {
   try {
+    // ⚠ Validar que sea admin
+    if (req.usuario?.rol !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado. Solo administradores pueden agregar productos.' });
+    }
+
     const { nombre, categoria, precio, detalle } = req.body;
     const imagen = req.file.filename;
 
@@ -39,12 +43,16 @@ const agregarProducto = async (req, res) => {
   }
 };
 
-/**
- * Actualizar un producto existente.
- * Puede incluir imagen nueva o mantener la actual.
- */
+// ===========================
+// ACTUALIZAR PRODUCTO
+// ===========================
 const actualizarProducto = async (req, res) => {
   try {
+    // ⚠ Validar que sea admin
+    if (req.usuario?.rol !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado. Solo administradores pueden modificar productos.' });
+    }
+
     const { id } = req.params;
     const { nombre, categoria, precio, detalle } = req.body;
     let imagen = req.body.imagen;
@@ -68,12 +76,16 @@ const actualizarProducto = async (req, res) => {
   }
 };
 
-/**
- * Eliminar un producto por ID.
- * Elimina también la imagen asociada del servidor si existe.
- */
+// ===========================
+// ELIMINAR PRODUCTO
+// ===========================
 const eliminarProducto = async (req, res) => {
   try {
+    // ⚠ Validar que sea admin
+    if (req.usuario?.rol !== 'admin') {
+      return res.status(403).json({ error: 'Acceso denegado. Solo administradores pueden eliminar productos.' });
+    }
+
     const { id } = req.params;
 
     const result = await pool.query(
@@ -84,11 +96,10 @@ const eliminarProducto = async (req, res) => {
     if (result.rows.length) {
       const imagePath = path.join(__dirname, '../public/images', result.rows[0].imagen);
       if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath); 
+        fs.unlinkSync(imagePath);
       }
     }
 
-    // Eliminar producto de la base de datos
     const { rowCount } = await pool.query('DELETE FROM productos WHERE id = $1', [id]);
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Producto no encontrado' });
@@ -101,7 +112,6 @@ const eliminarProducto = async (req, res) => {
   }
 };
 
-// Exportar funciones del controlador
 module.exports = {
   obtenerProductos,
   agregarProducto,

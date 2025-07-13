@@ -75,7 +75,7 @@ const login = async (req, res) => {
       nombre: usuario.nombre
     };
 
-    const token = jwt.sign(payload, secretKey, { expiresIn: '2h' });
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2h' });
 
     delete usuario.password; // eliminar contraseña antes de enviar datos al cliente
 

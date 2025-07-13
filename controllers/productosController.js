@@ -1,5 +1,3 @@
-const path = require('path');
-const fs = require('fs');
 const pool = require('../models/db');
 
 /**
@@ -16,23 +14,22 @@ const obtenerProductos = async (req, res) => {
 };
 
 /**
- * Agregar un nuevo producto con imagen.
- * Requiere campos: nombre, detalle, categoria, precio, y un archivo de imagen.
+ * Agregar un nuevo producto.
+ * Requiere campos: nombre, detalle, categoria, precio, imagen (URL).
  */
 const agregarProducto = async (req, res) => {
   try {
-    const { nombre, categoria, precio, detalle } = req.body;
-    const imagen = req.file?.filename;
+    const { nombre, categoria, precio, detalle, imagen } = req.body;
 
-    const precioNumerico = parseFloat(precio); // 👈 Corregido
+    const precioNumerico = parseFloat(precio);
 
     const query = `
       INSERT INTO productos (nombre, detalle, categoria, precio, imagen)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *`;
     const values = [nombre, detalle, categoria, precioNumerico, imagen];
-    const { rows } = await pool.query(query, values);
 
+    const { rows } = await pool.query(query, values);
     res.status(201).json(rows[0]);
   } catch (error) {
     console.error('❌ Error al agregar producto:', error);
@@ -42,19 +39,13 @@ const agregarProducto = async (req, res) => {
 
 /**
  * Actualizar un producto existente.
- * Puede incluir imagen nueva o mantener la actual.
  */
 const actualizarProducto = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, categoria, precio, detalle } = req.body;
-    let imagen = req.body.imagen;
+    const { nombre, categoria, precio, detalle, imagen } = req.body;
 
-    if (req.file) {
-      imagen = req.file.filename;
-    }
-
-    const precioNumerico = parseFloat(precio); // 👈 Corregido
+    const precioNumerico = parseFloat(precio);
 
     const query = `
       UPDATE productos
@@ -62,8 +53,8 @@ const actualizarProducto = async (req, res) => {
       WHERE id = $6
       RETURNING *`;
     const values = [nombre, detalle, categoria, precioNumerico, imagen, id];
-    const { rows } = await pool.query(query, values);
 
+    const { rows } = await pool.query(query, values);
     res.json(rows[0]);
   } catch (error) {
     console.error('❌ Error al actualizar producto:', error);
@@ -73,24 +64,12 @@ const actualizarProducto = async (req, res) => {
 
 /**
  * Eliminar un producto por ID.
- * Elimina también la imagen asociada del servidor si existe.
  */
 const eliminarProducto = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query(
-      'SELECT imagen FROM productos WHERE id = $1',
-      [id]
-    );
-
-    if (result.rows.length) {
-      const imagePath = path.join(__dirname, '../public/images', result.rows[0].imagen);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath); 
-      }
-    }
-
+    // Nota: ya no se borra imagen local, pues usamos Cloudinary
     const { rowCount } = await pool.query('DELETE FROM productos WHERE id = $1', [id]);
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Producto no encontrado' });

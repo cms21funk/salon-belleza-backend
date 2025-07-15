@@ -30,9 +30,7 @@ const registrarCliente = async (req, res) => {
 // =======================================
 const registrarStaff = async (req, res) => {
   try {
-    const { nombre, email, password, comuna, genero, rol, especialidad } = req.body;
-    const imagen = req.file ? req.file.filename : null;
-
+    const { nombre, email, password, comuna, genero, rol, especialidad, imagen } = req.body;
     const passwordEncriptada = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
@@ -92,15 +90,13 @@ const login = async (req, res) => {
 const actualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, email, rol, especialidad, genero, comuna, password } = req.body;
-    const imagen = req.file ? req.file.filename : null;
+    const { nombre, email, rol, especialidad, genero, comuna, password, imagen } = req.body;
     let passwordEncriptada = null;
 
     if (password && password.trim() !== '') {
       passwordEncriptada = await bcrypt.hash(password, 10);
     }
 
-    // Construcción dinámica de campos a actualizar
     let campos = [];
     let valores = [];
     let index = 1;

@@ -14,12 +14,15 @@ const obtenerProductos = async (req, res) => {
 };
 
 /**
- * Agregar un nuevo producto.
- * Requiere campos: nombre, detalle, categoria, precio, imagen (URL).
+ * Agregar un nuevo producto con imagen (Cloudinary).
  */
 const agregarProducto = async (req, res) => {
   try {
     const { nombre, categoria, precio, detalle, imagen } = req.body;
+
+    if (!nombre || !categoria || !precio || !detalle || !imagen) {
+      return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
 
     const precioNumerico = parseFloat(precio);
 
@@ -32,13 +35,13 @@ const agregarProducto = async (req, res) => {
     const { rows } = await pool.query(query, values);
     res.status(201).json(rows[0]);
   } catch (error) {
-    console.error('❌ Error al agregar producto:', error);
+    console.error('❌ Error al agregar producto:', error.message);
     res.status(500).json({ error: 'Error al agregar producto' });
   }
 };
 
 /**
- * Actualizar un producto existente.
+ * Actualizar un producto existente (Cloudinary).
  */
 const actualizarProducto = async (req, res) => {
   try {
@@ -57,19 +60,18 @@ const actualizarProducto = async (req, res) => {
     const { rows } = await pool.query(query, values);
     res.json(rows[0]);
   } catch (error) {
-    console.error('❌ Error al actualizar producto:', error);
+    console.error('❌ Error al actualizar producto:', error.message);
     res.status(500).json({ error: 'Error al actualizar producto' });
   }
 };
 
 /**
- * Eliminar un producto por ID.
+ * Eliminar un producto por ID (solo de la BD).
  */
 const eliminarProducto = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Nota: ya no se borra imagen local, pues usamos Cloudinary
     const { rowCount } = await pool.query('DELETE FROM productos WHERE id = $1', [id]);
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Producto no encontrado' });
@@ -77,7 +79,7 @@ const eliminarProducto = async (req, res) => {
 
     res.json({ mensaje: 'Producto eliminado correctamente' });
   } catch (error) {
-    console.error('❌ Error al eliminar producto:', error);
+    console.error('❌ Error al eliminar producto:', error.message);
     res.status(500).json({ error: 'Error al eliminar producto' });
   }
 };
@@ -86,5 +88,5 @@ module.exports = {
   obtenerProductos,
   agregarProducto,
   actualizarProducto,
-  eliminarProducto
+  eliminarProducto,
 };

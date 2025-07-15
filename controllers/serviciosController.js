@@ -1,10 +1,22 @@
-// controllers/serviciosController.js
 const pool = require('../models/db');
+const cloudinary = require('cloudinary').v2;
+const fs = require('fs/promises');
 
-/**
- * Obtener todos los servicios disponibles
- * Incluye datos del profesional asociado a cada servicio.
- */
+// Configura tu cuenta Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const subirACloudinary = async (file) => {
+  const resultado = await cloudinary.uploader.upload(file.path, {
+    folder: 'servicios_salon'
+  });
+  await fs.unlink(file.path); // Borra archivo temporal
+  return resultado.secure_url;
+};
+
 const obtenerServicios = async (req, res) => {
   try {
     const { rows } = await pool.query(`
@@ -19,14 +31,14 @@ const obtenerServicios = async (req, res) => {
   }
 };
 
-/**
- * Crear un nuevo servicio
- * Requiere datos completos del servicio + imagen + profesional asignado.
- */
 const crearServicio = async (req, res) => {
   try {
     const { servicio, tipo, detalle, precio, staff_id } = req.body;
-    const imagen = req.file ? req.file.filename : null;
+    let imagen = null;
+
+    if (req.file) {
+      imagen = await subirACloudinary(req.file);
+    }
 
     const query = `
       INSERT INTO servicios (servicio, tipo, detalle, precio, imagen, staff_id)
@@ -43,15 +55,15 @@ const crearServicio = async (req, res) => {
   }
 };
 
-/**
- * Actualizar un servicio existente
- * Soporta actualización de imagen (si se carga una nueva).
- */
 const actualizarServicio = async (req, res) => {
   try {
     const { id } = req.params;
     const { servicio, tipo, detalle, precio, staff_id } = req.body;
-    const imagen = req.file ? req.file.filename : null;
+    let imagen = null;
+
+    if (req.file) {
+      imagen = await subirACloudinary(req.file);
+    }
 
     const query = `
       UPDATE servicios SET
@@ -74,10 +86,6 @@ const actualizarServicio = async (req, res) => {
   }
 };
 
-/**
- * Eliminar un servicio
- * Elimina de forma permanente un servicio por su ID.
- */
 const eliminarServicio = async (req, res) => {
   try {
     const { id } = req.params;
@@ -90,7 +98,6 @@ const eliminarServicio = async (req, res) => {
   }
 };
 
-//Exportar funciones del controlador
 module.exports = {
   obtenerServicios,
   crearServicio,

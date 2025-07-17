@@ -31,11 +31,13 @@ const registrarCliente = async (req, res) => {
 const registrarStaff = async (req, res) => {
   try {
     const { nombre, email, password, comuna, genero, rol, especialidad, imagen } = req.body;
+
+    // Encriptar contraseña
     const passwordEncriptada = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
       'INSERT INTO usuarios (nombre, email, password, comuna, genero, rol, especialidad, imagen) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [nombre, email, passwordEncriptada, comuna, genero, rol, especialidad, imagen]
+      [nombre, email, passwordEncriptada, comuna, genero, rol, especialidad, imagen || null]
     );
 
     res.status(201).json({ mensaje: 'Staff registrado exitosamente', usuario: result.rows[0] });
@@ -44,6 +46,7 @@ const registrarStaff = async (req, res) => {
     res.status(500).json({ error: 'Error al registrar staff' });
   }
 };
+
 
 // =======================================
 // LOGIN (Autenticación con JWT)

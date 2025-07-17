@@ -10,12 +10,11 @@ const secretKey = require('../secretKey');
 const registrarCliente = async (req, res) => {
   try {
     const { nombre, email, password, comuna, genero, rol, especialidad } = req.body;
-    // Encriptar contraseña
     const passwordEncriptada = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
       'INSERT INTO usuarios (nombre, email, password, comuna, genero, rol) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [ nombre, email, passwordEncriptada, comuna, genero, rol || 'cliente' ]
+      [nombre, email, passwordEncriptada, comuna, genero, rol || 'cliente']
     );
 
     res.status(201).json({ mensaje: 'Cliente registrado exitosamente', usuario: result.rows[0] });
@@ -26,13 +25,17 @@ const registrarCliente = async (req, res) => {
 };
 
 // =======================================
-// REGISTRAR STAFF
+// REGISTRAR STAFF (con imagen de Cloudinary ya procesada en frontend)
 // =======================================
 const registrarStaff = async (req, res) => {
   try {
-    const { nombre, email, password, comuna, genero, rol, especialidad, imagen } = req.body;
+    let imagen = req.body.imagen;
+    if (req.file && req.file.path) {
+      // Si estás subiendo desde archivo (no desde Cloudinary), puedes procesarlo aquí
+      imagen = `/images/${req.file.filename}`;
+    }
 
-    // Encriptar contraseña
+    const { nombre, email, password, comuna, genero, rol, especialidad } = req.body;
     const passwordEncriptada = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
@@ -47,14 +50,12 @@ const registrarStaff = async (req, res) => {
   }
 };
 
-
 // =======================================
 // LOGIN (Autenticación con JWT)
 // =======================================
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
 
     if (result.rows.length === 0) {
@@ -62,14 +63,11 @@ const login = async (req, res) => {
     }
 
     const usuario = result.rows[0];
-
-    // Validar contraseña
     const passwordValida = await bcrypt.compare(password, usuario.password);
     if (!passwordValida) {
       return res.status(401).json({ error: 'Contraseña incorrecta' });
     }
 
-    // Crear payload para el token
     const payload = {
       id: usuario.id,
       rol: usuario.rol,
@@ -77,8 +75,7 @@ const login = async (req, res) => {
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '2h' });
-
-    delete usuario.password; // eliminar contraseña antes de enviar datos al cliente
+    delete usuario.password;
 
     res.status(200).json({ mensaje: 'Login exitoso', token, usuario });
   } catch (error) {
@@ -93,9 +90,13 @@ const login = async (req, res) => {
 const actualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, email, rol, especialidad, genero, comuna, password, imagen } = req.body;
-    let passwordEncriptada = null;
+    const { nombre, email, rol, especialidad, genero, comuna, password } = req.body;
+    let imagen = req.body.imagen;
+    if (req.file && req.file.path) {
+      imagen = `/images/${req.file.filename}`;
+    }
 
+    let passwordEncriptada = null;
     if (password && password.trim() !== '') {
       passwordEncriptada = await bcrypt.hash(password, 10);
     }
@@ -142,9 +143,6 @@ const eliminarUsuario = async (req, res) => {
   }
 };
 
-// =======================================
-// EXPORTAR FUNCIONES DEL CONTROLADOR
-// =======================================
 module.exports = {
   registrarCliente,
   registrarStaff,

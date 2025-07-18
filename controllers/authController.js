@@ -1,13 +1,13 @@
-// ✅ controllers/authController.js 
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import pool from '../models/db.js';
-import secretKey from '../secretKey.js';
+// ✅ controllers/authController.js
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const pool = require('../models/db');
+const secretKey = require('../secretKey');
 
 // =======================================
 // REGISTRAR CLIENTE
 // =======================================
-export const registrarCliente = async (req, res) => {
+const registrarCliente = async (req, res) => {
   try {
     const { nombre, email, password, comuna, genero, rol, especialidad } = req.body;
     const passwordEncriptada = await bcrypt.hash(password, 10);
@@ -27,13 +27,14 @@ export const registrarCliente = async (req, res) => {
 // =======================================
 // REGISTRAR STAFF
 // =======================================
-export const registrarStaff = async (req, res) => {
+const registrarStaff = async (req, res) => {
   try {
     let imagen = req.body.imagen;
 
-    // Solo acepta enlaces válidos de Cloudinary
-    if (imagen && imagen.startsWith('https://res.cloudinary.com')) {
-      imagen = imagen;
+    if (req.file && req.file.path) {
+      imagen = `/images/${req.file.filename}`;
+    } else if (imagen && imagen.startsWith('https://res.cloudinary.com')) {
+      imagen = imagen; // válida
     } else {
       imagen = null;
     }
@@ -56,7 +57,7 @@ export const registrarStaff = async (req, res) => {
 // =======================================
 // LOGIN
 // =======================================
-export const login = async (req, res) => {
+const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
@@ -90,13 +91,15 @@ export const login = async (req, res) => {
 // =======================================
 // ACTUALIZAR USUARIO
 // =======================================
-export const actualizarUsuario = async (req, res) => {
+const actualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
     const { nombre, email, rol, especialidad, genero, comuna, password } = req.body;
     let imagen = req.body.imagen;
 
-    if (imagen && imagen.startsWith('https://res.cloudinary.com')) {
+    if (req.file && req.file.path) {
+      imagen = `/images/${req.file.filename}`;
+    } else if (imagen && imagen.startsWith('https://res.cloudinary.com')) {
       imagen = imagen;
     } else {
       imagen = null;
@@ -138,7 +141,7 @@ export const actualizarUsuario = async (req, res) => {
 // =======================================
 // ELIMINAR USUARIO
 // =======================================
-export const eliminarUsuario = async (req, res) => {
+const eliminarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM usuarios WHERE id = $1', [id]);

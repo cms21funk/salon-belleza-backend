@@ -1,4 +1,4 @@
-// authController.js
+// ✅ controllers/authController.js
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../models/db');
@@ -25,14 +25,18 @@ const registrarCliente = async (req, res) => {
 };
 
 // =======================================
-// REGISTRAR STAFF (con imagen de Cloudinary ya procesada en frontend)
+// REGISTRAR STAFF
 // =======================================
 const registrarStaff = async (req, res) => {
   try {
     let imagen = req.body.imagen;
+
     if (req.file && req.file.path) {
-      // Si estás subiendo desde archivo (no desde Cloudinary), puedes procesarlo aquí
       imagen = `/images/${req.file.filename}`;
+    } else if (imagen && imagen.startsWith('https://res.cloudinary.com')) {
+      imagen = imagen; // válida
+    } else {
+      imagen = null;
     }
 
     const { nombre, email, password, comuna, genero, rol, especialidad } = req.body;
@@ -40,7 +44,7 @@ const registrarStaff = async (req, res) => {
 
     const result = await pool.query(
       'INSERT INTO usuarios (nombre, email, password, comuna, genero, rol, especialidad, imagen) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [nombre, email, passwordEncriptada, comuna, genero, rol, especialidad, imagen || null]
+      [nombre, email, passwordEncriptada, comuna, genero, rol, especialidad, imagen]
     );
 
     res.status(201).json({ mensaje: 'Staff registrado exitosamente', usuario: result.rows[0] });
@@ -51,7 +55,7 @@ const registrarStaff = async (req, res) => {
 };
 
 // =======================================
-// LOGIN (Autenticación con JWT)
+// LOGIN
 // =======================================
 const login = async (req, res) => {
   try {
@@ -92,8 +96,13 @@ const actualizarUsuario = async (req, res) => {
     const { id } = req.params;
     const { nombre, email, rol, especialidad, genero, comuna, password } = req.body;
     let imagen = req.body.imagen;
+
     if (req.file && req.file.path) {
       imagen = `/images/${req.file.filename}`;
+    } else if (imagen && imagen.startsWith('https://res.cloudinary.com')) {
+      imagen = imagen;
+    } else {
+      imagen = null;
     }
 
     let passwordEncriptada = null;

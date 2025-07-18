@@ -19,6 +19,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
     "nodemailer": "^7.0.3",
+    "type": "module",
     "pg": "^8.16.0"
   },
   "devDependencies": {

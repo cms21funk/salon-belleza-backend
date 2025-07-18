@@ -95,13 +95,13 @@ export const actualizarUsuario = async (req, res) => {
     const { nombre, email, rol, especialidad, genero, comuna, password } = req.body;
     let imagen = req.body.imagen;
 
-    if (req.file && req.file.path) {
-      imagen = `/images/${req.file.filename}`;
-    } else if (imagen && imagen.startsWith('https://res.cloudinary.com')) {
-      // usar imagen tal cual
-    } else {
-      imagen = null;
-    }
+if (imagen && imagen.startsWith('https://res.cloudinary.com')) {
+  // se deja tal como está
+} else if (req.file && req.file.filename) {
+  imagen = `/images/${req.file.filename}`;
+} else {
+  imagen = null;
+}
 
     let passwordEncriptada = null;
     if (password && password.trim() !== '') {

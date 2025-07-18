@@ -1,15 +1,16 @@
-// ✅ controllers/authController.js
 import bcrypt from 'bcrypt';
-const jwt = require('jsonwebtoken');
-const pool = require('../models/db');
-const secretKey = require('../secretKey');
+import jwt from 'jsonwebtoken';
+import pool from '../models/db.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // =======================================
 // REGISTRAR CLIENTE
 // =======================================
-const registrarCliente = async (req, res) => {
+export const registrarCliente = async (req, res) => {
   try {
-    const { nombre, email, password, comuna, genero, rol, especialidad } = req.body;
+    const { nombre, email, password, comuna, genero, rol } = req.body;
     const passwordEncriptada = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
@@ -27,34 +28,32 @@ const registrarCliente = async (req, res) => {
 // =======================================
 // REGISTRAR STAFF
 // =======================================
-export const registroStaff = async (req, res) => {
+export const registrarStaff = async (req, res) => {
   try {
-    const { nombre, rol, especialidad, genero, email, password, comuna } = req.body;
-    let imagenURL = null;
-
+    let imagen = req.body.imagen;
     if (req.file && req.file.path) {
-      imagenURL = req.file.path; // URL Cloudinary
+      imagen = `/images/${req.file.filename}`;
     }
 
-    const passwordEncriptada = await encriptarPassword(password);
-    const values = [nombre, rol, especialidad, genero, email, passwordEncriptada, comuna, imagenURL];
+    const { nombre, email, password, comuna, genero, rol, especialidad } = req.body;
+    const passwordEncriptada = await bcrypt.hash(password, 10);
 
-    await pool.query(
-      `INSERT INTO usuarios (nombre, rol, especialidad, genero, email, password, comuna, imagen)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      values
+    const result = await pool.query(
+      'INSERT INTO usuarios (nombre, email, password, comuna, genero, rol, especialidad, imagen) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+      [nombre, email, passwordEncriptada, comuna, genero, rol, especialidad, imagen || null]
     );
 
-    res.status(201).json({ mensaje: 'Staff registrado correctamente' });
+    res.status(201).json({ mensaje: 'Staff registrado exitosamente', usuario: result.rows[0] });
   } catch (error) {
     console.error('Error al registrar staff:', error);
-    res.status(500).json({ error: 'Error en el servidor' });
+    res.status(500).json({ error: 'Error al registrar staff' });
   }
 };
+
 // =======================================
 // LOGIN
 // =======================================
-const login = async (req, res) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
@@ -88,18 +87,13 @@ const login = async (req, res) => {
 // =======================================
 // ACTUALIZAR USUARIO
 // =======================================
-const actualizarUsuario = async (req, res) => {
+export const actualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
     const { nombre, email, rol, especialidad, genero, comuna, password } = req.body;
     let imagen = req.body.imagen;
-
     if (req.file && req.file.path) {
       imagen = `/images/${req.file.filename}`;
-    } else if (imagen && imagen.startsWith('https://res.cloudinary.com')) {
-      imagen = imagen;
-    } else {
-      imagen = null;
     }
 
     let passwordEncriptada = null;
@@ -138,7 +132,7 @@ const actualizarUsuario = async (req, res) => {
 // =======================================
 // ELIMINAR USUARIO
 // =======================================
-const eliminarUsuario = async (req, res) => {
+export const eliminarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM usuarios WHERE id = $1', [id]);

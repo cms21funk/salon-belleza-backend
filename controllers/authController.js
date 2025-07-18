@@ -27,33 +27,30 @@ const registrarCliente = async (req, res) => {
 // =======================================
 // REGISTRAR STAFF
 // =======================================
-const registrarStaff = async (req, res) => {
+export const registroStaff = async (req, res) => {
   try {
-    let imagen = req.body.imagen;
+    const { nombre, rol, especialidad, genero, email, password, comuna } = req.body;
+    let imagenURL = null;
 
     if (req.file && req.file.path) {
-      imagen = `/images/${req.file.filename}`;
-    } else if (imagen && imagen.startsWith('https://res.cloudinary.com')) {
-      imagen = imagen; // válida
-    } else {
-      imagen = null;
+      imagenURL = req.file.path; // URL Cloudinary
     }
 
-    const { nombre, email, password, comuna, genero, rol, especialidad } = req.body;
-    const passwordEncriptada = await bcrypt.hash(password, 10);
+    const passwordEncriptada = await encriptarPassword(password);
+    const values = [nombre, rol, especialidad, genero, email, passwordEncriptada, comuna, imagenURL];
 
-    const result = await pool.query(
-      'INSERT INTO usuarios (nombre, email, password, comuna, genero, rol, especialidad, imagen) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-      [nombre, email, passwordEncriptada, comuna, genero, rol, especialidad, imagen]
+    await pool.query(
+      `INSERT INTO usuarios (nombre, rol, especialidad, genero, email, password, comuna, imagen)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      values
     );
 
-    res.status(201).json({ mensaje: 'Staff registrado exitosamente', usuario: result.rows[0] });
+    res.status(201).json({ mensaje: 'Staff registrado correctamente' });
   } catch (error) {
     console.error('Error al registrar staff:', error);
-    res.status(500).json({ error: 'Error al registrar staff' });
+    res.status(500).json({ error: 'Error en el servidor' });
   }
 };
-
 // =======================================
 // LOGIN
 // =======================================

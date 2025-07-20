@@ -1,8 +1,13 @@
-// server.js   
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const path = require('path');
+// server.js (versión ES Modules)
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Configurar __dirname para ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Cargar variables de entorno (.env)
 dotenv.config();
@@ -10,13 +15,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ Lista de dominios permitidos (agrega el tuyo real de Netlify)
+// Lista de dominios permitidos
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://mellifluous-sunburst-de2725.netlify.app' // 👈 el que estás usando ahora
+  'https://mellifluous-sunburst-de2725.netlify.app'
 ];
 
-// ✅ Middleware de CORS bien configurado
+// Middleware de CORS
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -28,25 +33,25 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json()); // Parsear JSON
+app.use(express.json());
 
-// Servir imágenes desde carpeta pública
+// Servir imágenes públicas
 app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
 
-// Importar rutas
-const profesionalesRoutes = require('./routes/profesionalesRoutes');
-const reservasRoutes = require('./routes/reservasRoutes');
-const authRoutes = require('./routes/authRoutes');
-const productosRoutes = require('./routes/productosRoutes');
-const usuariosRoutes = require('./routes/usuariosRoutes');
-const feedbackRoutes = require('./routes/feedbackRoutes');
-const observacionesRoutes = require('./routes/observacionesRoutes');
-const serviciosRoutes = require('./routes/serviciosRoutes');
-const likesRoutes = require('./routes/likesRoutes');
-const likesProductosRoutes = require('./routes/likesProductosRoutes');
-const carritoRoutes = require('./routes/carritoRoutes');
+// Rutas importadas (✅ ES Modules)
+import profesionalesRoutes from './routes/profesionalesRoutes.js';
+import reservasRoutes from './routes/reservasRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import productosRoutes from './routes/productosRoutes.js';
+import usuariosRoutes from './routes/usuariosRoutes.js';
+import feedbackRoutes from './routes/feedbackRoutes.js';
+import observacionesRoutes from './routes/observacionesRoutes.js';
+import serviciosRoutes from './routes/serviciosRoutes.js';
+import likesRoutes from './routes/likesRoutes.js';
+import likesProductosRoutes from './routes/likesProductosRoutes.js';
+import carritoRoutes from './routes/carritoRoutes.js';
 
-// Usar rutas con prefijo /api
+// Usar rutas
 app.use('/api/profesionales', profesionalesRoutes);
 app.use('/api/reservas', reservasRoutes);
 app.use('/api/auth', authRoutes);
@@ -57,24 +62,23 @@ app.use('/api/observaciones', observacionesRoutes);
 app.use('/api/servicios', serviciosRoutes);
 app.use('/api/likes', likesRoutes);
 app.use('/api/likes-productos', likesProductosRoutes);
-app.use('/api', carritoRoutes); 
+app.use('/api', carritoRoutes);
 
 // Ruta raíz
 app.get('/', (req, res) => {
   res.send('🧖‍♀️ API Salón de Belleza Sary Salgado funcionando correctamente');
 });
 
-// Ruta no encontrada
+// Ruta 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
 });
 
-// Iniciar servidor (excepto si estamos en modo test)
+// Iniciar servidor si no está en test
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
   });
 }
 
-// Exportar para testing
-module.exports = app;
+export default app;

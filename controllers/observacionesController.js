@@ -1,11 +1,6 @@
-// controllers/observacionesController.js
-const pool = require('../models/db');
+import pool from '../models/db.js';
 
-/**
- * Crear una observación nueva dirigida a una profesional del staff.
- * Se guarda con el ID del administrador, ID del staff y el mensaje.
- */
-const crearObservacion = async (req, res) => {
+export const crearObservacion = async (req, res) => {
   const { staff_id, admin_id, mensaje } = req.body;
   try {
     const result = await pool.query(
@@ -20,11 +15,7 @@ const crearObservacion = async (req, res) => {
   }
 };
 
-/**
- * Obtener todas las observaciones registradas para una profesional específica del staff.
- * Ordenadas por fecha descendente.
- */
-const obtenerObservacionesPorStaff = async (req, res) => {
+export const obtenerObservacionesPorStaff = async (req, res) => {
   const { staff_id } = req.params;
   try {
     const result = await pool.query(
@@ -40,10 +31,7 @@ const obtenerObservacionesPorStaff = async (req, res) => {
   }
 };
 
-/**
- * Marcar una observación como "Leído" al ser visualizada por la profesional.
- */
-const marcarComoLeido = async (req, res) => {
+export const marcarComoLeido = async (req, res) => {
   const { id } = req.params;
   try {
     await pool.query(
@@ -57,16 +45,10 @@ const marcarComoLeido = async (req, res) => {
   }
 };
 
-/**
- * Eliminar una observación específica.
- */
-const eliminarObservacion = async (req, res) => {
+export const eliminarObservacion = async (req, res) => {
   const { id } = req.params;
   try {
-    await pool.query(
-      `DELETE FROM observaciones_staff WHERE id = $1`,
-      [id]
-    );
+    await pool.query(`DELETE FROM observaciones_staff WHERE id = $1`, [id]);
     res.json({ mensaje: 'Observación eliminada' });
   } catch (error) {
     console.error('❌ Error al eliminar observación:', error);
@@ -74,10 +56,7 @@ const eliminarObservacion = async (req, res) => {
   }
 };
 
-/**
- * Editar el contenido del mensaje de una observación específica.
- */
-const editarObservacion = async (req, res) => {
+export const editarObservacion = async (req, res) => {
   const { id } = req.params;
   const { mensaje } = req.body;
   try {
@@ -90,13 +69,4 @@ const editarObservacion = async (req, res) => {
     console.error('❌ Error al editar observación:', error);
     res.status(500).json({ error: 'Error al editar observación' });
   }
-};
-
-// Exportar todas las funciones del controlador
-module.exports = {
-  crearObservacion,
-  obtenerObservacionesPorStaff,
-  marcarComoLeido,
-  eliminarObservacion,
-  editarObservacion
 };

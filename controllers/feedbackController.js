@@ -1,8 +1,7 @@
-// controllers/feedbackController.js
 const pool = require('../models/db');
 
 /**
- *Registra el feedback de un cliente hacia una profesional del staff.
+ * Registra el feedback de un cliente hacia una profesional del staff.
  * Se guarda like, dislike, comentario y calificación con estrellas.
  */
 const registrarFeedback = async (req, res) => {
@@ -24,7 +23,7 @@ const registrarFeedback = async (req, res) => {
 };
 
 /**
- *Devuelve la cantidad de likes totales que ha recibido cada profesional del staff.
+ * Devuelve la cantidad de likes totales que ha recibido cada profesional del staff.
  */
 const obtenerLikesPorProfesional = async (req, res) => {
   try {
@@ -94,10 +93,32 @@ const obtenerFeedbackPorStaff = async (req, res) => {
   }
 };
 
-// Exportación de funciones para uso en rutas
+/**
+ * Elimina un comentario (feedback) específico por su ID.
+ */
+const eliminarFeedback = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'DELETE FROM feedback_staff WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Comentario no encontrado' });
+    }
+
+    res.json({ mensaje: 'Comentario eliminado correctamente' });
+  } catch (error) {
+    console.error('❌ Error al eliminar comentario:', error);
+    res.status(500).json({ error: 'Error al eliminar comentario' });
+  }
+};
+
 module.exports = {
   registrarFeedback,
   obtenerLikesPorProfesional,
   obtenerComentariosConDetalles,
-  obtenerFeedbackPorStaff
+  obtenerFeedbackPorStaff,
+  eliminarFeedback
 };

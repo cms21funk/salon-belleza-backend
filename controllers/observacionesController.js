@@ -4,9 +4,9 @@ export const crearObservacion = async (req, res) => {
   const { staff_id, admin_id, mensaje } = req.body;
   try {
     const result = await pool.query(
-      `INSERT INTO observaciones_staff (staff_id, admin_id, mensaje)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [staff_id, admin_id, mensaje]
+      `INSERT INTO observaciones_staff (staff_id, admin_id, mensaje, estado)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [staff_id, admin_id, mensaje, 'No leído']
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {

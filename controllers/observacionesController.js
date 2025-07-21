@@ -1,3 +1,4 @@
+//observacionesControllers.js
 import pool from '../models/db.js';
 
 export const crearObservacion = async (req, res) => {

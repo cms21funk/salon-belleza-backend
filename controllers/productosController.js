@@ -1,8 +1,6 @@
 const pool = require('../models/db');
 
-/**
- * Obtener todos los productos registrados.
- */
+// Obtener todos los productos registrados
 const obtenerProductos = async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM productos ORDER BY id ASC');
@@ -13,9 +11,7 @@ const obtenerProductos = async (req, res) => {
   }
 };
 
-/**
- * Agregar un nuevo producto con imagen (Cloudinary).
- */
+// Agregar un nuevo producto
 const agregarProducto = async (req, res) => {
   try {
     const { nombre, categoria, precio, detalle, imagen } = req.body;
@@ -29,7 +25,8 @@ const agregarProducto = async (req, res) => {
     const query = `
       INSERT INTO productos (nombre, detalle, categoria, precio, imagen)
       VALUES ($1, $2, $3, $4, $5)
-      RETURNING *`;
+      RETURNING *;
+    `;
     const values = [nombre, detalle, categoria, precioNumerico, imagen];
 
     const { rows } = await pool.query(query, values);
@@ -40,9 +37,7 @@ const agregarProducto = async (req, res) => {
   }
 };
 
-/**
- * Actualizar un producto existente (Cloudinary).
- */
+// Actualizar un producto existente
 const actualizarProducto = async (req, res) => {
   try {
     const { id } = req.params;
@@ -54,7 +49,8 @@ const actualizarProducto = async (req, res) => {
       UPDATE productos
       SET nombre = $1, detalle = $2, categoria = $3, precio = $4, imagen = $5
       WHERE id = $6
-      RETURNING *`;
+      RETURNING *;
+    `;
     const values = [nombre, detalle, categoria, precioNumerico, imagen, id];
 
     const { rows } = await pool.query(query, values);
@@ -65,22 +61,42 @@ const actualizarProducto = async (req, res) => {
   }
 };
 
-/**
- * Eliminar un producto por ID (solo de la BD).
- */
+// Eliminar un producto
 const eliminarProducto = async (req, res) => {
   try {
     const { id } = req.params;
-
     const { rowCount } = await pool.query('DELETE FROM productos WHERE id = $1', [id]);
     if (rowCount === 0) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
-
     res.json({ mensaje: 'Producto eliminado correctamente' });
   } catch (error) {
     console.error('❌ Error al eliminar producto:', error.message);
     res.status(500).json({ error: 'Error al eliminar producto' });
+  }
+};
+
+// ✅ Obtener productos más populares (Top 10 por likes)
+const obtenerTopProductosPopulares = async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        l.producto_id,
+        l.producto_nombre,
+        l.categoria,
+        COUNT(*) AS total_likes,
+        p.imagen
+      FROM likes_productos l
+      JOIN productos p ON l.producto_id = p.id
+      GROUP BY l.producto_id, l.producto_nombre, l.categoria, p.imagen
+      ORDER BY total_likes DESC
+      LIMIT 10;
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error('❌ Error al obtener productos populares:', error.message);
+    res.status(500).json({ error: 'Error al obtener productos populares' });
   }
 };
 
@@ -89,4 +105,5 @@ module.exports = {
   agregarProducto,
   actualizarProducto,
   eliminarProducto,
+  obtenerTopProductosPopulares
 };

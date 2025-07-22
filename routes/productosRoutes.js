@@ -3,18 +3,17 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 
-// Middleware para proteger rutas (JWT)
 const { verificarToken } = require('../middleware/middlewares');
 
-// Controladores de productos
 const {
   obtenerProductos,
   agregarProducto,
   actualizarProducto,
-  eliminarProducto
+  eliminarProducto,
+  obtenerTopProductosPopulares
 } = require('../controllers/productosController');
 
-// Configuración de Multer para subir imágenes a /public/images
+// Multer para subir imágenes local (si usas Cloudinary ya no es necesario)
 const storage = multer.diskStorage({
   destination: path.join(__dirname, '../public/images'),
   filename: (req, file, cb) => {
@@ -25,10 +24,13 @@ const upload = multer({ storage });
 
 /* RUTAS DE PRODUCTOS */
 
-// Obtener todos los productos (pública)
+// Obtener todos los productos
 router.get('/', obtenerProductos);
 
-// Obtener un producto por ID (pública)
+// Obtener Top 10 productos con más likes
+router.get('/populares', obtenerTopProductosPopulares);
+
+// Obtener un producto por ID
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -42,7 +44,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ✅ RUTAS PROTEGIDAS CON ORDEN CORRECTO
 // Crear producto
 router.post('/', verificarToken, upload.single('imagen'), agregarProducto);
 
